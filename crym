@@ -1,0 +1,89 @@
+#!/bin/bash
+# Copyright 2020 Luis Pulido Díaz
+# Requires Openssl
+dcs(){ echo "$@" >&2 && exit 1; }
+warn(){ echo "$@" >&2; }
+uuid_(){ cat /dev/urandom | tr -dc '0-9a-f' | fold -w 31 | head -n 1 | sed -e 's/\(........\)\(....\)\(...\)\(....\)\(............\)/\1-\2-4\3-\4-\5/'; }
+help(){
+	HELPTXT=$(cat <<EOF
+	$PROGRAM_NAME V.$PROGRAM_VERSION
+	Encrypts short messages using OpenSSL
+	Usage:
+	 $XCMD <options> [message]
+	  If keys are set already, encrypts the message and stores it in current directory as a .dat file.
+	  Options:
+	   -i [key file]		Key to be used,
+	   -o [output file or dir]    	Output file or directory to be used. If directory, file will be auto-generated as an UUID.
+	 $XCMD
+	  Shows help
+EOF
+)
+	echo "$HELPTXT"
+}
+loadvariables_(){
+	PROGRAM_NAME=crym
+	PROGRAM_VERSION=0.1
+	XCMD=$PROGRAM_NAME
+	PROGRAM_ROOT=/usr/lib/$PROGRAM_NAME
+	NSFW=0
+	[[ $(id -u) -eq 0 ]] && AMIROOT=1 || AMIROOT=0
+	PROGRAM_BAMBUCHA=$PROGRAM_ROOT/bambuchaf
+	PROGRAM_KEYFR=$PROGRAM_ROOT/.platinumd
+	PROGRAM_KEYFN=(.pkeyf .pskeyf)
+	# [[ -F $PROGRAM_BAMBUCHA && $(bambuchasig $(cat $PROGRAM_BAMBUCHA)) -eq 1 ]] && INSTALLEDALREADY=1
+	[[ -d "$PROGRAM_ROOT" && -f "$PROGRAM_BAMBUCHA" ]] && INSTALLEDALREADY=1 || INSTALLEDALREADY=0
+	[[ -f "$PROGRAM_KEYFR/${PROGRAM_KEYFN[0]}" && -f "$PROGRAM_KEYFR/${PROGRAM_KEYFN[1]}" ]] && NOKEY=0 || NOKEY=1
+}
+bambuchasig(){
+	sha256sum "$PROGRAM_ROOT/$PROGRAM_NAME" >> "$PROGRAM_BAMBUCHA"
+}
+install_(){
+	[[ "$INSTALLEDALREADY" -eq 1 ]] && dcs "crym is installed already, or at least $PROGRAM_BAMBUCHA is present already"
+	[[ "$AMIROOT" -ne 1 ]] && dcs "you or your masteruser must be root so try run as sudo"
+	echo "Installing..."
+	mkdir -p "$PROGRAM_ROOT" && echo "Created directory $PROGRAM_ROOT"
+	touch "$PROGRAM_BAMBUCHA" && echo "Created file $PROGRAM_BAMBUCHA"
+	cp "$0" "$PROGRAM_ROOT/$PROGRAM_NAME" && echo "Copied program from $0 to $PROGRAM_ROOT"
+	[[ ! -x "$(command -v sha256sum)" ]] && warn "Warning: Not signed because sha256sum is not present" || bambuchasig
+	( cd $PROGRAM_ROOT && ln -s $(pwd)/$PROGRAM_NAME /usr/local/bin/$PROGRAM_NAME ) && echo "Created link in /usr/local/bin so program is executable now"
+}
+offer_install(){
+	read -p "$PROGRAM_NAME not installed. Install now? y/n "
+	case "$REPLY" in
+		y|yes) install_ && return;;
+		*) echo "Ok, not installed";;
+	esac
+}
+run(){
+
+	loadvariables_
+
+	[[ "$INSTALLEDALREADY" -ne 1 ]] && offer_install && return
+
+	[[ "$(basename $0)" != "crym" ]] && dcs "basename must be crym"
+
+
+	while [[ $# -gt 0 ]] ; do
+		case "$1" in
+			-i) KPPKEY="$2"; shift; shift;;
+			-o) OUTFILE="$2"; shift; shift;;
+			*) ;;
+		esac
+	done
+
+	[[ ! -f "$KPPKEY" && -n "$NOKEY" ]] && dcs "Error: No key specified nor installed"
+
+	[[ -z "$1" ]] && help && return
+
+	[[ -z "$OUTFILE" ]] && OUTFILE=.
+
+	[[ -d "$OUTFILE" ]] && OUTFILE="$OUTFILE/$(uuid_)"
+
+	[[ ! -d "$(dirname $OUTFILE)" ]] && dcs "Error: Directory $(dirname $OUTFILE) is invalid"
+
+	[[ -f "$OUTFILE" ]] && dcs "Error: File $OUTFILE already exists"
+
+	echo "Vamos aqui"
+
+}
+run "$@"
