@@ -1,6 +1,7 @@
 #!/bin/bash
 # Copyright 2020, Luis Pulido Diaz
 THECRYM=./crym
+THEURL=https://luispulido.com/nextbins/crym/crym
 bambuchasig(){
 	(
 		cd "$(dirname $1)"
@@ -24,7 +25,9 @@ run(){
 	echo "Installing..."
 	mkdir -p "$PROGRAM_ROOT" && echo "Created directory $PROGRAM_ROOT"
 	touch "$PROGRAM_BAMBUCHA" && echo "Created file $PROGRAM_BAMBUCHA"
-	cp "$THECRYM" "$PROGRAM_ROOT/$PROGRAM_NAME" && echo "Copied program from $THECRYM to $PROGRAM_ROOT/$PROGRAM_NAME"
+	curl -o "$PROGRAM_ROOT/$PROGRAM_NAME" "$THEURL" && echo "Downloaded the crym program from $THEURL to $PROGRAM_ROOT/$PROGRAM_NAME"
+	[[ ! -f "$PROGRAM_ROOT/$PROGRAM_NAME" ]] && echo "Error. The file could not be downloaded. Try running with higher permissions" && exit 1
+	chmod +x "$PROGRAM_ROOT/$PROGRAM_NAME"
 	[[ ! -x "$(command -v sha256sum)" ]] && warn "Warning: Not signed because sha256sum is not present" || bambuchasig "$PROGRAM_ROOT/$PROGRAM_NAME" "$PROGRAM_BAMBUCHA"
 	( cd $PROGRAM_ROOT && ln -s $(pwd)/$PROGRAM_NAME /usr/local/bin/$PROGRAM_NAME ) && echo "Created link in /usr/local/bin so program is executable now"
 }

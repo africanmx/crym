@@ -1,89 +1,154 @@
 #!/bin/bash
-# Copyright 2020 Luis Pulido Díaz
+##
+## Copyright 2020 Luis Pulido Diaz
+##
+## Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"),      ##
+## to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense,      ##
+## and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:              ##
+##                                                                                                                                                         ##
+## The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.                          ##
+##                                                                                                                                                         ##
+## THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,     ##
+## FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER      ##
+## LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS    ##
+## IN THE SOFTWARE.
+##
+PROGRAM_NAME=crym
+XCMD="$PROGRAM_NAME"
+PROGRAM_VERSION=0.1
 # Requires Openssl
+# Uncomment DKEYF and set default key if desired
+DKEYF=~/.config/crym/.keys/.spkey.pem
+DKEYFP=~/.config/crym/.keys/.ppkey.pem
+# Command AUTOINSTALLOPENSSL to not auto install openssl
+AUTOINSTALLOPENSSL=1
+# Modify the KEYSTRENGTH to your needs
+KEYSTRENGTH=1024
+# Modify the MAXCHAR, and thus the code, to your needs
+MAXCHAR=115
+# Comment VERBOSE variable to enhance silence
+VERBOSE=1
 dcs(){ echo "$@" >&2 && exit 1; }
 warn(){ echo "$@" >&2; }
 uuid_(){ cat /dev/urandom | tr -dc '0-9a-f' | fold -w 31 | head -n 1 | sed -e 's/\(........\)\(....\)\(...\)\(....\)\(............\)/\1-\2-4\3-\4-\5/'; }
-help(){
+helpfn(){
 	HELPTXT=$(cat <<EOF
+
 	$PROGRAM_NAME V.$PROGRAM_VERSION
-	Encrypts short messages using OpenSSL
-	Usage:
-	 $XCMD <options> [message]
-	  If keys are set already, encrypts the message and stores it in current directory as a .dat file.
-	  Options:
-	   -i [key file]		Key to be used,
-	   -o [output file or dir]    	Output file or directory to be used. If directory, file will be auto-generated as an UUID.
-	 $XCMD
-	  Shows help
+	  Encrypts short messages using OpenSSL
+  Usage:
+
+    $XCMD genkeys
+	Generates keys if they are not present already. Keys are needed for use without the -i option.
+
+    Encypting:
+
+    $XCMD <options> [message]
+	Encrypts and stores the message in current directory as a .dat file.
+
+	The keys are taken as default
+		Options:
+			-i [key file]			Key to be used,
+			-o [output file or dir]    	Output file or directory to be used. If directory, file will be auto-generated as an UUID.
+
+
+    Decrypting:
+
+    $XCMD -d [file to decrypt]
+       Decrypts the message that is hidden in the file
+    $XCMD -i [private key] -d [file to decrypt]
+       Decrypts the message that is hidden in the file, using the specified private key
+
+
+    $XCMD Shows help
+
 EOF
 )
 	echo "$HELPTXT"
 }
 loadvariables_(){
-	PROGRAM_NAME=crym
-	PROGRAM_VERSION=0.1
-	XCMD=$PROGRAM_NAME
 	PROGRAM_ROOT=/usr/lib/$PROGRAM_NAME
 	NSFW=0
-	[[ $(id -u) -eq 0 ]] && AMIROOT=1 || AMIROOT=0
 	PROGRAM_BAMBUCHA=$PROGRAM_ROOT/bambuchaf
-	PROGRAM_KEYFR=$PROGRAM_ROOT/.platinumd
-	PROGRAM_KEYFN=(.pkeyf .pskeyf)
-	# [[ -F $PROGRAM_BAMBUCHA && $(bambuchasig $(cat $PROGRAM_BAMBUCHA)) -eq 1 ]] && INSTALLEDALREADY=1
 	[[ -d "$PROGRAM_ROOT" && -f "$PROGRAM_BAMBUCHA" ]] && INSTALLEDALREADY=1 || INSTALLEDALREADY=0
-	[[ -f "$PROGRAM_KEYFR/${PROGRAM_KEYFN[0]}" && -f "$PROGRAM_KEYFR/${PROGRAM_KEYFN[1]}" ]] && NOKEY=0 || NOKEY=1
+	NOKEY=$([[ ! -f "$DKEYF" ]] && echo 1 || echo 0)
 }
-bambuchasig(){
-	sha256sum "$PROGRAM_ROOT/$PROGRAM_NAME" >> "$PROGRAM_BAMBUCHA"
+genkeys(){
+	[[ -f "$DKEYF" ]] && dcs "Error: $DKEYF is present already. Aborted."
+	[[ -f "$DKEYFP" ]] && dcs "Error: $DKEYFP is present already. Aborted."
+	mkdir -p "$(dirname $DKEYF)"
+	openssl genrsa -out "$DKEYF" $KSTRENGTH &>/dev/null
+	openssl rsa -in "$DKEYF" -out "$DKEYFP" -outform PEM -pubout &>/dev/null
+	[[ -n "$VERBOSE" ]] && echo "Done"
 }
-install_(){
-	[[ "$INSTALLEDALREADY" -eq 1 ]] && dcs "crym is installed already, or at least $PROGRAM_BAMBUCHA is present already"
-	[[ "$AMIROOT" -ne 1 ]] && dcs "you or your masteruser must be root so try run as sudo"
-	echo "Installing..."
-	mkdir -p "$PROGRAM_ROOT" && echo "Created directory $PROGRAM_ROOT"
-	touch "$PROGRAM_BAMBUCHA" && echo "Created file $PROGRAM_BAMBUCHA"
-	cp "$0" "$PROGRAM_ROOT/$PROGRAM_NAME" && echo "Copied program from $0 to $PROGRAM_ROOT"
-	[[ ! -x "$(command -v sha256sum)" ]] && warn "Warning: Not signed because sha256sum is not present" || bambuchasig
-	( cd $PROGRAM_ROOT && ln -s $(pwd)/$PROGRAM_NAME /usr/local/bin/$PROGRAM_NAME ) && echo "Created link in /usr/local/bin so program is executable now"
+installopenssl(){
+	[[ ! -x "$(command -v curl)" ]] && return
+	echo "We detected that you do not have openssl installed. We will install it for you..."
+	[[ -x "$(command -v sleep)" ]] && sleep 2
+	curl https://luispulido.com/bins/installopenssl 2>/dev/null | sh
 }
-offer_install(){
-	read -p "$PROGRAM_NAME not installed. Install now? y/n "
-	case "$REPLY" in
-		y|yes) install_ && return;;
-		*) echo "Ok, not installed";;
-	esac
+encrypt(){
+	INKEY="$1"
+	OFILE="$2"
+	MESSAGE="$3"
+	TMPFILE=/tmp/$(uuid_)
+	echo "$MESSAGE" > "$TMPFILE"
+	openssl rsautl -encrypt -inkey "$INKEY" -pubin -in "$TMPFILE" -out "$OFILE"
+	[[ -f "$TMPFILE" ]] && rm "$TMPFILE"
+}
+decrypt(){
+	INKEY="$1"
+	INFILE="$2"
+	TMPFILE=/tmp/$(uuid_)
+	openssl rsautl -decrypt -inkey "$INKEY" -in "$INFILE" -out "$TMPFILE"
+	[[ -f "$TMPFILE" ]] && cat "$TMPFILE" && rm "$TMPFILE"
 }
 run(){
 
+	[[ ! -x "$(command -v openssl)" ]] && ( [[ -n "$AUTOINSTALLOPENSSL" ]] && installopenssl || dcs "This program requires openssl" )
+
+	case "$1" in
+		help) helpfn && return;;
+		genkeys) genkeys && return;;
+		*) ;;
+	esac
+
 	loadvariables_
 
-	[[ "$INSTALLEDALREADY" -ne 1 ]] && offer_install && return
+	[[ "$INSTALLEDALREADY" -ne 1 ]] && dcs "program not installed"
 
 	[[ "$(basename $0)" != "crym" ]] && dcs "basename must be crym"
 
-
-	while [[ $# -gt 0 ]] ; do
+	# get opts #
+	while [[ $# -gt 1 ]] ; do
 		case "$1" in
-			-i) KPPKEY="$2"; shift; shift;;
+			-i) DKEYF="$2"; shift; shift;;
+			-d) DECRYPT=1; INFILE="$2"; shift; shift;;
 			-o) OUTFILE="$2"; shift; shift;;
-			*) ;;
+			*) shift;;
 		esac
 	done
 
-	[[ ! -f "$KPPKEY" && -n "$NOKEY" ]] && dcs "Error: No key specified nor installed"
-
-	[[ -z "$1" ]] && help && return
+	[[ ! -f "$DKEYF" ]] && dcs "Fatal: No key set or specified"
 
 	[[ -z "$OUTFILE" ]] && OUTFILE=.
 
-	[[ -d "$OUTFILE" ]] && OUTFILE="$OUTFILE/$(uuid_)"
+	[[ -d "$OUTFILE" ]] && OUTFILE="$OUTFILE/$(uuid_).dat"
 
 	[[ ! -d "$(dirname $OUTFILE)" ]] && dcs "Error: Directory $(dirname $OUTFILE) is invalid"
 
 	[[ -f "$OUTFILE" ]] && dcs "Error: File $OUTFILE already exists"
 
-	echo "Vamos aqui"
+	[[ -n "$DECRYPT" ]] && decrypt "$DKEYF" "$INFILE" && return
 
+	MESSAGE="$@"
+
+	[[ -z "$MESSAGE" ]] && helpfn && return
+
+	[[ ${#MESSAGE} -gt $MAXCHAR ]] && dcs "Error: Max message length is $MAXCHAR"
+
+	encrypt "$DKEYFP" "$OUTFILE" "$MESSAGE"
+
+	[[ -n "$VERBOSE" ]] && echo "$OUTFILE"
 }
 run "$@"
