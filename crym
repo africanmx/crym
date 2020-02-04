@@ -104,22 +104,15 @@ decrypt(){
 	[[ -f "$TMPFILE" ]] && cat "$TMPFILE" && rm "$TMPFILE"
 }
 run(){
-
 	[[ ! -x "$(command -v openssl)" ]] && ( [[ -n "$AUTOINSTALLOPENSSL" ]] && installopenssl || dcs "This program requires openssl" )
-
 	case "$1" in
 		help) helpfn && return;;
 		genkeys) genkeys && return;;
 		*) ;;
 	esac
-
 	loadvariables_
-
 	[[ "$INSTALLEDALREADY" -ne 1 ]] && dcs "program not installed"
-
 	[[ "$(basename $0)" != "crym" ]] && dcs "basename must be crym"
-
-	# get opts #
 	while [[ $# -gt 1 ]] ; do
 		case "$1" in
 			-i) DKEYF="$2"; shift; shift;;
@@ -128,27 +121,18 @@ run(){
 			*) shift;;
 		esac
 	done
-
-	[[ ! -f "$DKEYF" ]] && dcs "Fatal: No key set or specified"
-
+	[[ ! -f "$DKEYF" ]] && ( [[ -n "$AUTOGENKEYS" ]] && genkeys || dcs "Warning: Keys not generated yet. Please run crym genkeys first." )
 	[[ -z "$OUTFILE" ]] && OUTFILE=.
-
 	[[ -d "$OUTFILE" ]] && OUTFILE="$OUTFILE/$(uuid_).dat"
-
 	[[ ! -d "$(dirname $OUTFILE)" ]] && dcs "Error: Directory $(dirname $OUTFILE) is invalid"
-
 	[[ -f "$OUTFILE" ]] && dcs "Error: File $OUTFILE already exists"
-
 	[[ -n "$DECRYPT" ]] && decrypt "$DKEYF" "$INFILE" && return
-
 	MESSAGE="$@"
-
 	[[ -z "$MESSAGE" ]] && helpfn && return
-
+	# the message limitation can be fixed with encrypted file concatenation, like base64-encoded lines in one file, or multiple files
+	# compressed as a tar or something, or, try concatenating binary files altought I am not quite sure that will work
 	[[ ${#MESSAGE} -gt $MAXCHAR ]] && dcs "Error: Max message length is $MAXCHAR"
-
 	encrypt "$DKEYFP" "$OUTFILE" "$MESSAGE"
-
 	[[ -n "$VERBOSE" ]] && echo "$OUTFILE"
 }
 run "$@"

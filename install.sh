@@ -8,7 +8,6 @@ bambuchasig(){
 	)
 }
 run(){
-	[[ ! -f "$THECRYM" ]] && echo "crym binary must be present"
 	PROGRAM_NAME=crym
 	PROGRAM_VERSION=0.1
 	XCMD=$PROGRAM_NAME

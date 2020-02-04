@@ -1,6 +1,8 @@
 #!/bin/bash
 # Copyright 2020, Luis Pulido Diaz
 THECRYM=./crym
+# you can replace this with the github raurl:
+# https://raw.githubusercontent.com/africanmx/crym/dev/crym
 THEURL=https://luispulido.com/nextbins/crym/crym
 bambuchasig(){
 	(
