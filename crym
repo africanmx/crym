@@ -17,7 +17,7 @@
 # checkordie(){ for i in head tail awk tr fold ; do [[ ! $(command -v $i) ]] && echo "fatal: no $i available" && exit 1; done; }; checkordie;
 # crymordiee(){ [[ "$(basename $0)" != crym ]] && echo "fatal: basename must be crym" && exit 1; }; crymordiee;
 PROGRAM_NAME=$(head -n 16 $0 | tail -n 1 | awk '{print $2}')
-PROGRAM_VERSIONE=$(head -n 16 $0 | tail -n 1 | awk '{print $3}')
+PROGRAM_VERSION=$(head -n 16 $0 | tail -n 1 | awk '{print $3}')
 PROGRAM_SIGN=$(head -n 16 $0 | tail -n 1 | awk '{print $4}')
 XCMD="$PROGRAM_NAME"
 # Requires Openssl
@@ -76,8 +76,6 @@ EOF
 loadvariables_(){
 	PROGRAM_ROOT=/usr/lib/$PROGRAM_NAME
 	NSFW=0
-	PROGRAM_BAMBUCHA=$PROGRAM_ROOT/bambuchaf
-	[[ -d "$PROGRAM_ROOT" && -f "$PROGRAM_BAMBUCHA" ]] && INSTALLEDALREADY=1 || INSTALLEDALREADY=0
 	NOKEY=$([[ ! -f "$DKEYF" ]] && echo 1 || echo 0)
 }
 genkeys(){
@@ -118,7 +116,6 @@ run(){
 		*) ;;
 	esac
 	loadvariables_
-	[[ "$INSTALLEDALREADY" -ne 1 ]] && dcs "program not installed"
 	[[ "$(basename $0)" != "crym" ]] && dcs "basename must be crym"
 	while [[ $# -gt 1 ]] ; do
 		case "$1" in

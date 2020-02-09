@@ -1,12 +1,6 @@
 #!/bin/bash
 # Copyright 2020, Luis Pulido Diaz
 THECRYM=./crym
-bambuchasig(){
-	(
-		cd "$(dirname $1)"
-		sha256sum "$(basename $1)" > "$2"
-	)
-}
 run(){
 	PROGRAM_NAME=crym
 	PROGRAM_VERSION=0.1
@@ -20,7 +14,6 @@ run(){
 	esac
 	[[ $(id -u) -eq 0 ]] && AMIROOT=1 || AMIROOT=0
 	PROGRAM_ROOT=/usr/lib/$PROGRAM_NAME
-	PROGRAM_BAMBUCHA=$PROGRAM_ROOT/bambuchaf
 	PROGRAM_KEYFR=$PROGRAM_ROOT/.platinumd
 	PROGRAM_KEYFN=(.pkeyf .pskeyf)
 	[[ -d "$PROGRAM_ROOT" && -f "$PROGRAM_BAMBUCHA" ]] && INSTALLEDALREADY=1 || INSTALLEDALREADY=0
@@ -29,9 +22,12 @@ run(){
 	[[ "$AMIROOT" -ne 1 ]] && dcs "you or your masteruser must be root so try run as sudo"
 	echo "Installing..."
 	mkdir -p "$PROGRAM_ROOT" && echo "Created directory $PROGRAM_ROOT"
-	touch "$PROGRAM_BAMBUCHA" && echo "Created file $PROGRAM_BAMBUCHA"
 	cp "$THECRYM" "$PROGRAM_ROOT/$PROGRAM_NAME" && echo "Copied program from $THECRYM to $PROGRAM_ROOT/$PROGRAM_NAME"
-	[[ ! -x "$(command -v sha256sum)" ]] && warn "Warning: Not signed because sha256sum is not present" || bambuchasig "$PROGRAM_ROOT/$PROGRAM_NAME" "$PROGRAM_BAMBUCHA"
+	if [[ -f ./sign.sh ]] ; then
+		cp ./sign.sh "$PROGRAM_ROOT/sign.sh"
+		( cd $PROGRAM_ROOT && ./sign.sh )
+		echo "Copied signer and signed crym"
+	fi
 	( cd $PROGRAM_ROOT && ln -s $(pwd)/$PROGRAM_NAME /usr/local/bin/$PROGRAM_NAME ) && echo "Created link in /usr/local/bin so program is executable now"
 }
 run
