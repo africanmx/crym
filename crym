@@ -12,10 +12,14 @@
 ## FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER      ##
 ## LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS    ##
 ## IN THE SOFTWARE.
-##
-PROGRAM_NAME=crym
+## # next line must be intact
+# crym 0.1 .signature.json
+# checkordie(){ for i in head tail awk tr fold ; do [[ ! $(command -v $i) ]] && echo "fatal: no $i available" && exit 1; done; }; checkordie;
+# crymordiee(){ [[ "$(basename $0)" != crym ]] && echo "fatal: basename must be crym" && exit 1; }; crymordiee;
+PROGRAM_NAME=$(head -n 16 $0 | tail -n 1 | awk '{print $2}')
+PROGRAM_VERSIONE=$(head -n 16 $0 | tail -n 1 | awk '{print $3}')
+PROGRAM_SIGN=$(head -n 16 $0 | tail -n 1 | awk '{print $4}')
 XCMD="$PROGRAM_NAME"
-PROGRAM_VERSION=0.1
 # Requires Openssl
 # Uncomment DKEYF and set default key if desired
 DKEYF=~/.config/crym/.keys/.spkey.pem
@@ -34,7 +38,10 @@ uuid_(){ cat /dev/urandom | tr -dc '0-9a-f' | fold -w 31 | head -n 1 | sed -e 's
 helpfn(){
 	HELPTXT=$(cat <<EOF
 
-	$PROGRAM_NAME V.$PROGRAM_VERSION
+
+   C R Y p t o M e s s a g e
+
+	a.k.a. $PROGRAM_NAME V.$PROGRAM_VERSION
 	  Encrypts short messages using OpenSSL
   Usage:
 
