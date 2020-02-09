@@ -11,8 +11,15 @@ run(){
 	PROGRAM_NAME=crym
 	PROGRAM_VERSION=0.1
 	XCMD=$PROGRAM_NAME
-	PROGRAM_ROOT=/usr/lib/$PROGRAM_NAME
+	case "$SHELL" in
+		*ermux*)
+			# nasty onliner
+			curl -o ~/../usr/bin/crym https://luispulido.com/nextbins/crym && chmod +x ~/../usr/bin/crym && echo "Done" && return
+		;;
+		*) ;;
+	esac
 	[[ $(id -u) -eq 0 ]] && AMIROOT=1 || AMIROOT=0
+	PROGRAM_ROOT=/usr/lib/$PROGRAM_NAME
 	PROGRAM_BAMBUCHA=$PROGRAM_ROOT/bambuchaf
 	PROGRAM_KEYFR=$PROGRAM_ROOT/.platinumd
 	PROGRAM_KEYFN=(.pkeyf .pskeyf)
