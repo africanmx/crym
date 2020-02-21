@@ -8,7 +8,7 @@ run(){
 	case "$SHELL" in
 		*ermux*)
 			# nasty onliner
-			curl -o ~/../usr/bin/crym https://luispulido.com/nextbins/crym && chmod +x ~/../usr/bin/crym && echo "Done" && return
+			curl -o ~/../usr/bin/crym https://raw.githubusercontent.com/africanmx/crym/dev/crym && chmod +x ~/../usr/bin/crym && echo "Done" && return
 		;;
 		*) ;;
 	esac
