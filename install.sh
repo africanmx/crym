@@ -7,8 +7,8 @@ run(){
 	XCMD=$PROGRAM_NAME
 	case "$SHELL" in
 		*ermux*)
-			# nasty onliner
-			curl -o ~/../usr/bin/crym https://raw.githubusercontent.com/africanmx/crym/dev/crym && chmod +x ~/../usr/bin/crym && echo "Done" && return
+			# nasty onliner but nice af
+			curl -o ~/../usr/bi n/crym https://raw.githubusercontent.com/africanmx/crym/dev/crym && chmod +x ~/../usr/bin/crym && echo "Done" && return
 		;;
 		*) ;;
 	esac
