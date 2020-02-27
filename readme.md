@@ -1,5 +1,7 @@
 # Crym
-Crym is a tiny program that encrypts short messages using openssl
+CRYM stands for CRYpto Message. 
+It is a tiny program that encrypts short messages using openssl
+
 
 ## Installation
 ```
