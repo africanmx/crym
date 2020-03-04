@@ -34,7 +34,8 @@ MAXCHAR=115
 VERBOSE=1
 dcs(){ echo "$@" >&2 && exit 1; }
 warn(){ echo "$@" >&2; }
-uuid_(){ < /dev/urandom tr -dc _0-9-a-f | head -c${1:-31} | sed -e 's/\(........\)\(....\)\(...\)\(....\)\(............\)/\1-\2-4\3-\4-\5/'; echo; }
+uuid_(){ cat /dev/urandom | tr -dc '0-9a-f' | fold -w 31 | head -n 1 | sed -e 's/\(........\)\(....\)\(...\)\(....\)\(............\)/\1-\2-4\3-\4-\5/'; }
+tmpd(){ [[ "$SHELL" =~ rmux ]] && (mkdir -p ~/.tmp && echo ~/.tmp) || echo /tmp; }
 helpfn(){
 	HELPTXT=$(cat <<EOF
 
@@ -96,7 +97,7 @@ encrypt(){
 	INKEY="$1"
 	OFILE="$2"
 	MESSAGE="$3"
-	TMPFILE=/tmp/$(uuid_)
+	TMPFILE=$(tmpd)/$(uuid_)
 	echo "$MESSAGE" > "$TMPFILE"
 	openssl rsautl -encrypt -inkey "$INKEY" -pubin -in "$TMPFILE" -out "$OFILE"
 	[[ -f "$TMPFILE" ]] && rm "$TMPFILE"
@@ -104,7 +105,7 @@ encrypt(){
 decrypt(){
 	INKEY="$1"
 	INFILE="$2"
-	TMPFILE=/tmp/$(uuid_)
+	TMPFILE=$(tmpd)/$(uuid_)
 	openssl rsautl -decrypt -inkey "$INKEY" -in "$INFILE" -out "$TMPFILE"
 	[[ -f "$TMPFILE" ]] && cat "$TMPFILE" && rm "$TMPFILE"
 }
