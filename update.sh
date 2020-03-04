@@ -22,7 +22,8 @@ preload(){
 	done
 }
 current_sum(){
-	sha256sum "$CRYMF" | awk '{print $1}'
+		# check for signature file mejor y dejar un log de updates
+		sha256sum "$CRYMF" | awk '{print $1}'
 }
 last_sum(){
 	[[ -z "$(signal_)" ]] && dcs "Not connected to the Internet"
@@ -36,6 +37,16 @@ need_update(){
 	[[ "$(current_sum)" != "$(last_sum)" ]] && echo 1
 }
 run(){
+	case "$1" in
+		help|_help|--help)
+			cat <<EOF
+Crym update.sh
+Just run ./update.sh as sudo or root, to update the crym if needed.
+EOF
+			return
+		;;
+		*) ;;
+	esac
 	[[ -z "$(need_update)" ]] && return
 	[[ -n "$BACKUP" ]] && mkdir -p "$BACKUPD" && cp "$CRYMF" "$BACKUPD/$BACKUPNAME"
 	curl -o "$CRYMF" "$CRYMRF"
@@ -48,3 +59,5 @@ run(){
 	chmod +x "$CRYMF"
 	[[ -n "$VERBOSE" ]] && echo "Done"
 }
+run "$@"
+

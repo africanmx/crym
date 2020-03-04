@@ -1,14 +1,20 @@
 #!/bin/bash
 # Copyright 2020, Luis Pulido Diaz
-THECRYM=./crym
+PROGRAM_VERSION=0.1
+CRYM=crym
+SIGNER=sign.sh
+UPDATER=update.sh
+THEBRANCH=dev
+CRYMR=https://raw.githubusercontent.com/africanmx/crym/$THEBRANCH/crym
+SIGNERR=https://raw.githubusercontent.com/africanmx/crym/$THEBRANCH/sign.sh
+UPDATERR=https://raw.githubusercontent.com/africanmx/crym/$THEBRANCH/update.sh
 run(){
-	PROGRAM_NAME=crym
-	PROGRAM_VERSION=0.1
+	PROGRAM_NAME=$CRYM
 	XCMD=$PROGRAM_NAME
 	case "$SHELL" in
 		*ermux*)
-			# nasty onliner
-			curl -o ~/../usr/bin/crym https://luispulido.com/nextbins/crym && chmod +x ~/../usr/bin/crym && echo "Done" && return
+			# nasty onliner but nice af
+			curl -o ~/../usr/bin/crym $CRYMR && chmod +x ~/../usr/bin/crym && echo "Done" && return
 		;;
 		*) ;;
 	esac
@@ -22,12 +28,19 @@ run(){
 	[[ "$AMIROOT" -ne 1 ]] && dcs "you or your masteruser must be root so try run as sudo"
 	echo "Installing..."
 	mkdir -p "$PROGRAM_ROOT" && echo "Created directory $PROGRAM_ROOT"
-	cp "$THECRYM" "$PROGRAM_ROOT/$PROGRAM_NAME" && echo "Copied program from $THECRYM to $PROGRAM_ROOT/$PROGRAM_NAME"
-	if [[ -f ./sign.sh ]] ; then
-		cp ./sign.sh "$PROGRAM_ROOT/sign.sh"
-		( cd $PROGRAM_ROOT && ./sign.sh )
-		echo "Copied signer and signed crym"
-	fi
-	( cd $PROGRAM_ROOT && ln -s $(pwd)/$PROGRAM_NAME /usr/local/bin/$PROGRAM_NAME ) && echo "Created link in /usr/local/bin so program is executable now"
+	(
+		cd $PROGRAM_ROOT
+		curl -O "$CRYMR"
+		chmod +x ./$CRYM
+		[[ -n "$VERBOSE" ]] && echo "Downloaded the CRYM from $CRYMR"
+		curl -O "$SIGNERR" && echo "Downloaded the signer from $SIGNERR"
+		chmod +x "$SIGNER"
+		./$SIGNER && echo "Signed bin"
+		curl -O "$UPDATERR" && echo "Downloaded the updater from $UPDATERR"
+		chmod +x "$UPDATER"
+	)
+	ln -s $PROGRAM_ROOT/$PROGRAM_NAME /usr/local/bin/$PROGRAM_NAME
+	echo "Created link in /usr/local/bin so program is executable now"
+	echo "Updater is just there. Need to manually run it to update for now."
 }
 run

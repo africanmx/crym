@@ -1,0 +1,15 @@
+#!/bin/bash
+# Copyright Szocske asof http://stackoverflow.com/questions/16056135/ddg#16056298
+#  Encrypt:
+
+# openssl aes-256-cbc -a -salt -in secrets.txt -out secrets.txt.enc
+
+# Decrypt:
+
+# openssl aes-256-cbc -d -a -in secrets.txt.enc -out secrets.txt.new
+
+# But this does not make use of the public key infrastructure at all, so a bit like hammering in a nail with a screwdriver :-)
+
+# --Szocske
+# # 
+echo tbc
